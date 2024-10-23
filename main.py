@@ -2,6 +2,9 @@ import time
 import sys 
 import queue
 import tracemalloc 
+import heapq 
+
+sys.setrecursionlimit(999999)
 
 def getPos(board: list[str], weights: list[int]) -> tuple[(int, int), list[(int, int, int)], list[(int, int)]]: 
     playerPos, stones, stoneGoalPos = None, [], [] 
@@ -9,8 +12,10 @@ def getPos(board: list[str], weights: list[int]) -> tuple[(int, int), list[(int,
         for j, char in enumerate(row): 
             if char == '@': 
                 playerPos = (i, j)
-            elif char == '$': 
+            elif char == '$' or char == '*': 
                 stones.append((i, j, weights.pop()))
+                if char == '*':
+                    stoneGoalPos.append((i, j))
             elif char == '.': 
                 stoneGoalPos.append((i, j))
     return playerPos, tuple(stones), tuple(stoneGoalPos)
@@ -38,6 +43,40 @@ def isValid(playerPos, stonePos, action: tuple[int, int, chr]):
     x = playerPos[0] + action[0] + action[0] * action[-1].isupper()
     y = playerPos[1] + action[1] + action[1] * action[-1].isupper() 
     return board[x][y] != '#' and (x, y) not in stonePos
+
+def isFailed(stones):
+    """This function used to observe if the state is potentially failed, then prune the search"""
+    rotatePattern = [[0,1,2,3,4,5,6,7,8],
+                    [2,5,8,1,4,7,0,3,6],
+                    [0,1,2,3,4,5,6,7,8][::-1],
+                    [2,5,8,1,4,7,0,3,6][::-1]]
+    flipPattern = [[2,1,0,5,4,3,8,7,6],
+                    [0,3,6,1,4,7,2,5,8],
+                    [2,1,0,5,4,3,8,7,6][::-1],
+                    [0,3,6,1,4,7,2,5,8][::-1]]
+    allPattern = rotatePattern + flipPattern
+
+    posBox = [(stone[0], stone[1]) for stone in stones]
+    # print(posBox)
+    # exit()
+    for box in posBox:
+        if box not in stoneGoalPos:
+            curBoard = [(box[0] - 1, box[1] - 1), (box[0] - 1, box[1]), (box[0] - 1, box[1] + 1), 
+                    (box[0], box[1] - 1), (box[0], box[1]), (box[0], box[1] + 1), 
+                    (box[0] + 1, box[1] - 1), (box[0] + 1, box[1]), (box[0] + 1, box[1] + 1)]
+            for pattern in allPattern:
+                newBoard = [curBoard[i] for i in pattern]
+                if board[newBoard[1][0]][newBoard[1][1]] == '#' and board[newBoard[5][0]][newBoard[5][1]] == '#': 
+                    return True
+                if newBoard[1] in posBox and board[newBoard[2][0]][newBoard[2][1]] == '#' and board[newBoard[5][0]][newBoard[5][1]] == '#': 
+                    return True
+                elif newBoard[1] in posBox and board[newBoard[2][0]][newBoard[2][1]] == '#' and newBoard[5] in posBox: 
+                    return True
+                elif newBoard[1] in posBox and newBoard[2] in posBox and newBoard[5] in posBox: 
+                    return True
+                elif newBoard[1] in posBox and newBoard[6] in posBox and board[newBoard[2][0]][newBoard[2][1]] == '#' and board[newBoard[3][0]][newBoard[3][1]] == '#' and board[newBoard[8][0]][board[8][1]] == '#': 
+                    return True
+    return False
 
 def getActions(playerPos, stones): 
     actions = [[-1,0,'u','U'],[1,0,'d','D'],[0,-1,'l','L'],[0,1,'r','R']]
@@ -67,6 +106,15 @@ def updateGame(playerPos, stones, action):
                 break 
     return (xPlayer, yPlayer), tuple(stones), w 
 
+def calculateHeuristic(stones, stoneGoalPos): 
+    distance = 0 
+    stonePos = sorted(stones)
+    stoneGoalPos = sorted(stoneGoalPos)
+    for pos1, pos2 in zip(stonePos, stoneGoalPos): 
+        distance += abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+    return distance
+    
+
 def BFS(playerPos, stones, stoneGoalPos): 
     frontier = queue.Queue()
     closedSet = set()
@@ -78,19 +126,95 @@ def BFS(playerPos, stones, stoneGoalPos):
         if isGoal(stones, stoneGoalPos): 
             return actions, totalWeight, numNodes
         
-        if (playerPos, tuple(stones)) in closedSet:
+        if (playerPos, stones) in closedSet:
             continue
 
         closedSet.add((playerPos, stones))
 
         for action in getActions(playerPos, stones):
-            numNodes += 1 
             nextPlayerPos, nextStones, weight = updateGame(playerPos, stones, action)
+            if isFailed(nextStones): 
+                continue
+            numNodes += 1 
             frontier.put((nextPlayerPos, nextStones, actions + action[-1], totalWeight + weight))
+
+def DFS(playerPos, stones, stoneGoalPos): 
+    stack = []
+    closedSet = set()
+    numNodes = 1 
+    # Mỗi phần tử trong hàng đợi sẽ là 1 trạng thái (Vị trí người chơi, tọa độ các viên đá, Các move đã thực thi, Tổng weight đã thực thi)
+    stack.append((playerPos, stones, "", 0))
+    while stack: 
+        playerPos, stones, actions, totalWeight = stack.pop()
+
+        if isGoal(stones, stoneGoalPos): 
+            return actions, totalWeight, numNodes
+        
+        if (playerPos, stones) in closedSet:
+            continue
+
+        closedSet.add((playerPos, stones))
+
+        for action in getActions(playerPos, stones):
+            nextPlayerPos, nextStones, weight = updateGame(playerPos, stones, action)
+            if isFailed(nextStones): 
+                continue
+            numNodes += 1 
+            stack.append((nextPlayerPos, nextStones, actions + action[-1], totalWeight + weight))
+
+def UCS(playerPos, stones, stoneGoalPos):
+    frontier = []
+    heapq.heappush(frontier, (0, playerPos, stones, ""))
+    closedSet = set()
+    numNodes = 1 
+
+    while frontier:
+        totalWeight, playerPos, stones, actions = heapq.heappop(frontier)
+        
+        if isGoal(stones, stoneGoalPos): 
+            return actions, totalWeight, numNodes
+    
+        if (playerPos, stones) in closedSet:
+            continue
+    
+        closedSet.add((playerPos, stones))
+
+        for action in getActions(playerPos, stones): 
+            nextPlayerPos, nextStones, weight = updateGame(playerPos, stones, action)
+            if isFailed(nextStones): 
+                continue
+            numNodes += 1 
+            heapq.heappush(frontier, (totalWeight + weight, nextPlayerPos, nextStones, actions + action[-1]))
+
+def AStar(playerPos, stones, stoneGoalPos): 
+    frontier = []
+    heapq.heappush(frontier, (0, playerPos, stones, ""))
+    closedSet = set()
+    numNodes = 1 
+
+    while frontier:
+        totalWeight, playerPos, stones, actions = heapq.heappop(frontier)
+        
+        if isGoal(stones, stoneGoalPos): 
+            return actions, totalWeight, numNodes
+    
+        if (playerPos, stones) in closedSet:
+            continue
+    
+        closedSet.add((playerPos, stones))
+
+        for action in getActions(playerPos, stones): 
+            nextPlayerPos, nextStones, weight = updateGame(playerPos, stones, action)
+            if isFailed(nextStones): 
+                continue
+            heuristic = calculateHeuristic(stones, stoneGoalPos)
+            numNodes += 1 
+            heapq.heappush(frontier, (totalWeight + weight + heuristic, nextPlayerPos, nextStones, actions + action[-1]))
+
+
 
 if __name__ == '__main__':
     board, playerPos, stones, stoneGoalPos = initGame()
-
     # BFS 
     print("BFS")
     time_start = time.time()
@@ -103,10 +227,37 @@ if __name__ == '__main__':
     print(f"Steps: {len(actions)}, Weight: {totalWeight}, Node: {numNodes}, Time (ms): {timer:.2f}, Memory (MB): {memory_in_MB:.2f}")
     print(actions)
 
-    # TODO DFS
+    print("DFS")
+    time_start = time.time()
+    tracemalloc.start()
+    actions, totalWeight, numNodes = DFS(playerPos, stones, stoneGoalPos)
+    timer = (time.time() - time_start) * 1000 
+    current, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    memory_in_MB = peak / (1024 * 1024)  
+    print(f"Steps: {len(actions)}, Weight: {totalWeight}, Node: {numNodes}, Time (ms): {timer:.2f}, Memory (MB): {memory_in_MB:.2f}")
+    print(actions)
 
-    # TODO UCS
+    print("UCS")
+    time_start = time.time()
+    tracemalloc.start()
+    actions, totalWeight, numNodes = UCS(playerPos, stones, stoneGoalPos)
+    timer = (time.time() - time_start) * 1000 
+    current, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    memory_in_MB = peak / (1024 * 1024)  
+    print(f"Steps: {len(actions)}, Weight: {totalWeight}, Node: {numNodes}, Time (ms): {timer:.2f}, Memory (MB): {memory_in_MB:.2f}")
+    print(actions)
 
-    # TODO A*
+    print("A*")
+    time_start = time.time()
+    tracemalloc.start()
+    actions, totalWeight, numNodes = AStar(playerPos, stones, stoneGoalPos)
+    timer = (time.time() - time_start) * 1000 
+    current, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    memory_in_MB = peak / (1024 * 1024)  
+    print(f"Steps: {len(actions)}, Weight: {totalWeight}, Node: {numNodes}, Time (ms): {timer:.2f}, Memory (MB): {memory_in_MB:.2f}")
+    print(actions)
 
     
