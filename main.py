@@ -1,0 +1,112 @@
+import time 
+import sys 
+import queue
+import tracemalloc 
+
+def getPos(board: list[str], weights: list[int]) -> tuple[(int, int), list[(int, int, int)], list[(int, int)]]: 
+    playerPos, stones, stoneGoalPos = None, [], [] 
+    for i, row in enumerate(board): 
+        for j, char in enumerate(row): 
+            if char == '@': 
+                playerPos = (i, j)
+            elif char == '$': 
+                stones.append((i, j, weights.pop()))
+            elif char == '.': 
+                stoneGoalPos.append((i, j))
+    return playerPos, tuple(stones), tuple(stoneGoalPos)
+
+def initGame(): 
+    weights = list(map(int, input().split()))[::-1] # Lấy trọng số của các tảng đá 
+    board = [] # Bản đồ của trò chơi
+
+    # Lấy input đến khi kết thúc file  
+    while True: 
+        try: 
+            board.append(input())
+        except EOFError:
+            break 
+
+    # Lấy tọa độ của các tảng đá, người chơi 
+    playerPos, stones, stoneGoalPos = getPos(board, weights)
+    return board, playerPos, stones, stoneGoalPos
+
+def isGoal(stones, stoneGoalPos): 
+    stonePos = [(stone[0], stone[1]) for stone in stones]
+    return tuple(sorted(stonePos)) == stoneGoalPos
+
+def isValid(playerPos, stonePos, action: tuple[int, int, chr]): 
+    x = playerPos[0] + action[0] + action[0] * action[-1].isupper()
+    y = playerPos[1] + action[1] + action[1] * action[-1].isupper() 
+    return board[x][y] != '#' and (x, y) not in stonePos
+
+def getActions(playerPos, stones): 
+    actions = [[-1,0,'u','U'],[1,0,'d','D'],[0,-1,'l','L'],[0,1,'r','R']]
+    stonePos = [(stone[0], stone[1]) for stone in stones]
+    validActions = []
+    for action in actions:
+        x1, y1 = playerPos[0] + action[0], playerPos[1] + action[1]
+        if (x1, y1) in stonePos: # đẩy tảng đá
+            action.pop(2) 
+        else:
+            action.pop(3) 
+        if isValid(playerPos, stonePos, action):
+            validActions.append(action)
+        else: 
+            continue     
+    return validActions
+
+def updateGame(playerPos, stones, action): 
+    xPlayer, yPlayer = playerPos[0] + action[0], playerPos[1] + action[1]
+    stones = list(stones)
+    w = 0 
+    if action[-1].isupper():
+        for i, (x, y, w) in enumerate(stones): 
+            if (x, y) == (xPlayer, yPlayer):
+                stones.pop(i)
+                stones.append((xPlayer + action[0], yPlayer + action[1], w))
+                break 
+    return (xPlayer, yPlayer), tuple(stones), w 
+
+def BFS(playerPos, stones, stoneGoalPos): 
+    frontier = queue.Queue()
+    closedSet = set()
+    numNodes = 1 
+    # Mỗi phần tử trong hàng đợi sẽ là 1 trạng thái (Vị trí người chơi, tọa độ các viên đá, Các move đã thực thi, Tổng weight đã thực thi)
+    frontier.put((playerPos, stones, "", 0))
+    while not frontier.empty(): 
+        playerPos, stones, actions, totalWeight = frontier.get()
+        if isGoal(stones, stoneGoalPos): 
+            return actions, totalWeight, numNodes
+        
+        if (playerPos, tuple(stones)) in closedSet:
+            continue
+
+        closedSet.add((playerPos, stones))
+
+        for action in getActions(playerPos, stones):
+            numNodes += 1 
+            nextPlayerPos, nextStones, weight = updateGame(playerPos, stones, action)
+            frontier.put((nextPlayerPos, nextStones, actions + action[-1], totalWeight + weight))
+
+if __name__ == '__main__':
+    board, playerPos, stones, stoneGoalPos = initGame()
+
+    # BFS 
+    print("BFS")
+    time_start = time.time()
+    tracemalloc.start()
+    actions, totalWeight, numNodes = BFS(playerPos, stones, stoneGoalPos)
+    timer = (time.time() - time_start) * 1000 
+    current, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    memory_in_MB = peak / (1024 * 1024)  
+    print(f"Steps: {len(actions)}, Weight: {totalWeight}, Node: {numNodes}, Time (ms): {timer:.2f}, Memory (MB): {memory_in_MB:.2f}")
+    print(actions)
+
+    # TODO DFS
+
+    # TODO UCS
+
+    # TODO A*
+
+    
