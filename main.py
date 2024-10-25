@@ -104,6 +104,8 @@ def updateGame(playerPos, stones, action):
                 stones.pop(i)
                 stones.append((xPlayer + action[0], yPlayer + action[1], w))
                 break 
+    else: 
+        w = 1 
     return (xPlayer, yPlayer), tuple(stones), w 
 
 def calculateHeuristic(stones, stoneGoalPos): 
@@ -153,6 +155,9 @@ def DFS(playerPos, stones, stoneGoalPos):
         if (playerPos, stones) in closedSet:
             continue
 
+        if len(actions) >= 300: # heuristic cho DFS  
+            continue
+
         closedSet.add((playerPos, stones))
 
         for action in getActions(playerPos, stones):
@@ -188,12 +193,12 @@ def UCS(playerPos, stones, stoneGoalPos):
 
 def AStar(playerPos, stones, stoneGoalPos): 
     frontier = []
-    heapq.heappush(frontier, (0, playerPos, stones, ""))
+    heapq.heappush(frontier, (0, playerPos, stones, "", 0))
     closedSet = set()
     numNodes = 1 
 
     while frontier:
-        totalWeight, playerPos, stones, actions = heapq.heappop(frontier)
+        totalWeightHeuristic, playerPos, stones, actions, totalWeight = heapq.heappop(frontier)
         
         if isGoal(stones, stoneGoalPos): 
             return actions, totalWeight, numNodes
@@ -209,7 +214,7 @@ def AStar(playerPos, stones, stoneGoalPos):
                 continue
             heuristic = calculateHeuristic(stones, stoneGoalPos)
             numNodes += 1 
-            heapq.heappush(frontier, (totalWeight + weight + heuristic, nextPlayerPos, nextStones, actions + action[-1]))
+            heapq.heappush(frontier, (totalWeightHeuristic + weight + heuristic, nextPlayerPos, nextStones, actions + action[-1], totalWeight + weight))
 
 
 
