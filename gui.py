@@ -304,7 +304,7 @@ class PlayScreen:
                 self.current_step += 1
 
                 self.draw(screen)
-                pygame.time.delay(100)
+                pygame.time.delay(300)
         return None
 
     def get_size(self):
