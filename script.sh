@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for i in {1..10}
+for i in {1..20}
 do
-    python3 main.py < input-$i.txt > output-$i.txt
+    python3 main.py < input/input-$i.txt > output/output-$i.txt
 done

@@ -57,8 +57,7 @@ def isFailed(stones):
     allPattern = rotatePattern + flipPattern
 
     posBox = [(stone[0], stone[1]) for stone in stones]
-    # print(posBox)
-    # exit()
+
     for box in posBox:
         if box not in stoneGoalPos:
             curBoard = [(box[0] - 1, box[1] - 1), (box[0] - 1, box[1]), (box[0] - 1, box[1] + 1), 
@@ -97,24 +96,29 @@ def getActions(playerPos, stones):
 def updateGame(playerPos, stones, action): 
     xPlayer, yPlayer = playerPos[0] + action[0], playerPos[1] + action[1]
     stones = list(stones)
-    w = 0 
+    w = 0
     if action[-1].isupper():
         for i, (x, y, w) in enumerate(stones): 
             if (x, y) == (xPlayer, yPlayer):
                 stones.pop(i)
                 stones.append((xPlayer + action[0], yPlayer + action[1], w))
                 break 
-    else: 
-        w = 1 
-    return (xPlayer, yPlayer), tuple(stones), w 
+    return (xPlayer, yPlayer), tuple(stones), w + 1 
 
-def calculateHeuristic(stones, stoneGoalPos): 
+def calculateHeuristic(stones, stoneGoalPos, playerPos): 
     distance = 0 
-    stonePos = sorted(stones)
-    stoneGoalPos = sorted(stoneGoalPos)
-    for pos1, pos2 in zip(stonePos, stoneGoalPos): 
-        distance += abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
-    return distance
+
+    for pos1 in stoneGoalPos: 
+        minDist = 10 ** 9
+        for pos2 in stones: 
+            curDist = abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+            curDist *= pos2[-1]
+            curDist += abs(playerPos[0] - pos2[0]) + abs(playerPos[1] - pos2[1])
+            if curDist < minDist: 
+                minDist = curDist
+        distance += minDist 
+
+    return distance 
     
 
 def BFS(playerPos, stones, stoneGoalPos): 
@@ -126,7 +130,7 @@ def BFS(playerPos, stones, stoneGoalPos):
     while not frontier.empty(): 
         playerPos, stones, actions, totalWeight = frontier.get()
         if isGoal(stones, stoneGoalPos): 
-            return actions, totalWeight, numNodes
+            return actions, totalWeight - len(actions), numNodes
         
         if (playerPos, stones) in closedSet:
             continue
@@ -150,12 +154,12 @@ def DFS(playerPos, stones, stoneGoalPos):
         playerPos, stones, actions, totalWeight = stack.pop()
 
         if isGoal(stones, stoneGoalPos): 
-            return actions, totalWeight, numNodes
+            return actions, totalWeight - len(actions), numNodes
         
         if (playerPos, stones) in closedSet:
             continue
 
-        if len(actions) >= 300: # heuristic cho DFS  
+        if len(actions) >= 1500: # heuristic cho DFS  
             continue
 
         closedSet.add((playerPos, stones))
@@ -177,7 +181,7 @@ def UCS(playerPos, stones, stoneGoalPos):
         totalWeight, playerPos, stones, actions = heapq.heappop(frontier)
         
         if isGoal(stones, stoneGoalPos): 
-            return actions, totalWeight, numNodes
+            return actions, totalWeight - len(actions), numNodes
     
         if (playerPos, stones) in closedSet:
             continue
@@ -201,7 +205,7 @@ def AStar(playerPos, stones, stoneGoalPos):
         totalWeightHeuristic, playerPos, stones, actions, totalWeight = heapq.heappop(frontier)
         
         if isGoal(stones, stoneGoalPos): 
-            return actions, totalWeight, numNodes
+            return actions, totalWeight - len(actions), numNodes
     
         if (playerPos, stones) in closedSet:
             continue
@@ -212,7 +216,7 @@ def AStar(playerPos, stones, stoneGoalPos):
             nextPlayerPos, nextStones, weight = updateGame(playerPos, stones, action)
             if isFailed(nextStones): 
                 continue
-            heuristic = calculateHeuristic(stones, stoneGoalPos)
+            heuristic = calculateHeuristic(stones, stoneGoalPos, playerPos)
             numNodes += 1 
             heapq.heappush(frontier, (totalWeightHeuristic + weight + heuristic, nextPlayerPos, nextStones, actions + action[-1], totalWeight + weight))
 
@@ -220,7 +224,6 @@ def AStar(playerPos, stones, stoneGoalPos):
 
 if __name__ == '__main__':
     board, playerPos, stones, stoneGoalPos = initGame()
-    # BFS 
     print("BFS")
     time_start = time.time()
     tracemalloc.start()
