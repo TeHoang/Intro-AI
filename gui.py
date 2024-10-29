@@ -1,6 +1,9 @@
 import pygame
 import sys
 import os
+import subprocess
+import threading
+import math
 
 os.environ['SDL_VIDEO_CENTERED'] = '1'
 
@@ -85,8 +88,8 @@ START_POS_Y = BUTTON_SIZE + 50
 
 class PlayScreen:
     def __init__(self, file_name):
-        self.input_file_name = file_name[0]
-        self.output_file_name = file_name[1]
+        self.input_file_name = f'./input/input-{file_name}.txt'
+        self.output_file_name = f'./output/output-{file_name}.txt'
         self.screen_name = 'Play Screen'
         self.font = pygame.font.Font(None, 50)
         self.PLAY_SCREEN_SIZE = (1200, 900)
@@ -109,7 +112,7 @@ class PlayScreen:
 
         self.stone_list = {}
 
-        with open(f'./output/{self.output_file_name}', 'r') as file:
+        with open(self.output_file_name, 'r') as file:
                 #self.sol = file.readlines()[2].strip()
                 file_lines = file.readlines()
                 self.sol = {}
@@ -127,7 +130,7 @@ class PlayScreen:
         self.pause_button_rect = None
         self.home_button_rect = home_button_img.get_rect(topleft=(1200 - BUTTON_SIZE * 2 - 20, 10))
 
-        with open(f'./input/{self.input_file_name}', 'r') as file:
+        with open(self.input_file_name, 'r') as file:
             self.stone_weights = file.readline().split()
             lines = file.readlines()
             for line in lines:
@@ -304,7 +307,7 @@ class PlayScreen:
                 self.current_step += 1
 
                 self.draw(screen)
-                pygame.time.delay(300)
+                pygame.time.delay(100)
         return None
 
     def get_size(self):
@@ -318,19 +321,10 @@ class MenuScreen:
         self.font = pygame.font.Font(None, 36)
         self.selected_index = 0
         self.CELL_SIZE = self.MENU_SCREEN_SIZE[0] // self.ROWS
-        # self.maps = ['Map 1', 'Map 2', 'Map 3', 'Map 4', 'Map 5', 'Map 6', 'Map 7', 'Map 8',
-        #  'Map 9', 'Map 10', 'Map 11', 'Map 12', 'Map 13', 'Map 14', 'Map 15', 'Map 16']
         self.maps = []
         for i in range(1,26):
             self.maps.append(f'Map {i}')
 
-        input_folder_path = './input'
-        input_files = os.listdir(input_folder_path)
-        self.input_files = sorted([f for f in input_files if os.path.isfile(os.path.join(input_folder_path, f))], key=lambda x: int(x.split('-')[1].split('.')[0]))
-
-        output_folder_path = './output'
-        output_files = os.listdir(output_folder_path)
-        self.output_files = sorted([f for f in output_files if os.path.isfile(os.path.join(output_folder_path, f))], key=lambda x: int(x.split('-')[1].split('.')[0]))
 
     def draw(self, screen, *other):
         for i in range(self.ROWS ):
@@ -344,24 +338,71 @@ class MenuScreen:
                 text_rect = text.get_rect(center=rect.center)
                 screen.blit(text, text_rect)
 
+    def run_main_py(self):
+        with open(f'./input/input-{self.index}.txt', 'r') as file:
+            data = file.readlines()
+        data_string = ''.join(data)
+        result = subprocess.run([sys.executable, "main.py"], input=data_string, text=True, capture_output=True)
+        self.result_output = result.stdout.strip() 
+        self.running = False
+
     def handle_event(self, screen):
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                        pygame.quit()
-                        sys.exit()
+            if event.type == pygame.QUIT:   
+                pygame.quit()
+                sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_x, mouse_y = event.pos
                 row = mouse_y // self.CELL_SIZE
                 col = mouse_x // self.CELL_SIZE
                 index = row * self.ROWS + col
-                self.index = index
+                self.index = index + 1
+
+                loading_screen = pygame.display.set_mode((600, 400))
+                clock = pygame.time.Clock()
+
+                center_x, center_y = loading_screen.get_width() // 2, loading_screen.get_height() // 2
+                radius = 50
+                angle = 0
+
+                self.running = True
+                x = True
+                while True:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:   
+                            pygame.quit()
+                            sys.exit()
+                    if self.running == False:
+                        break
+
+                    if x == True:
+                        x = False
+                        threading.Thread(target=self.run_main_py).start()
+                    loading_screen.fill((30, 30, 30))
+                    x = center_x + radius * math.cos(angle)
+                    y = center_y + radius * math.sin(angle)
+
+
+                    pygame.draw.circle(loading_screen, (255, 255, 255), (int(x), int(y)), 10)
+
+
+                    angle += 0.1
+                    if angle >= 2 * math.pi:
+                        angle -= 2 * math.pi
+
+                    pygame.display.flip()
+                    clock.tick(60)
+                
+                with open(f'./output/output-{self.index}.txt', 'w') as file:
+                    file.write(self.result_output)
+
                 return 'play_screen'
 
     def get_size(self):
         return self.MENU_SCREEN_SIZE
 
     def get_file_name(self):
-        return [self.input_files[self.index], self.output_files[self.index]]
+        return self.index
 
 def main():
     menu_screen = MenuScreen()

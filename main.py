@@ -21,13 +21,16 @@ def getPos(board: list[str], weights: list[int]) -> tuple[(int, int), list[(int,
     return playerPos, tuple(stones), tuple(stoneGoalPos)
 
 def initGame(): 
-    weights = list(map(int, input().split()))[::-1] # Lấy trọng số của các tảng đá 
+    weights = list(map(int, sys.stdin.readline().split()))[::-1] # Lấy trọng số của các tảng đá 
     board = [] # Bản đồ của trò chơi
 
     # Lấy input đến khi kết thúc file  
     while True: 
         try: 
-            board.append(input())
+            line = sys.stdin.readline()
+            if not line:
+                break
+            board.append(line)
         except EOFError:
             break 
 
