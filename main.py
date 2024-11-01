@@ -14,7 +14,7 @@ def getPos(board: list[str], weights: list[int]) -> tuple[(int, int), list[(int,
                 playerPos = (i, j)
             elif char == '+': 
                 playerPos = (i, j)
-                stoneGoalPos.append(i, j)
+                stoneGoalPos.append((i, j))
             elif char == '$' or char == '*': 
                 stones.append((i, j, weights.pop()))
                 if char == '*':
