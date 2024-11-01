@@ -208,10 +208,10 @@ class PlayScreen:
                     elif pic == '_':
                         screen.blit(floor_img, (x, y))
 
-        step_text = self.font.render(f"Steps: {self.step_count}", True, WHITE)
+        step_text = self.font.render(f"Step: {self.step_count}", True, WHITE)
         screen.blit(step_text, (10, 10))
 
-        sum_weight = self.font.render(f"Cost: {self.sum_weight}", True, WHITE)
+        sum_weight = self.font.render(f"Weight: {self.sum_weight}", True, WHITE)
         screen.blit(sum_weight, (10, 70))
 
         screen.blit(menu_button_img, (self.PLAY_SCREEN_SIZE[0] - BUTTON_SIZE, 10))
@@ -294,8 +294,8 @@ class PlayScreen:
                     self.sum_weight += self.stone_list[f'{next_i}:{next_j}']
                     self.stone_list[f'{self.i + new_pos_dict[step][0]}:{self.j + new_pos_dict[step][1]}'] = self.stone_list[f'{next_i}:{next_j}']
                     del self.stone_list[f'{next_i}:{next_j}']
-                else:
-                    self.sum_weight += 1
+                # else:
+                #     self.sum_weight += 1
 
                 del self.game_map[self.i][self.j][-1]
                 self.game_map[next_i][next_j].append('@')
