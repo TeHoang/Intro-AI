@@ -9,6 +9,12 @@ os.environ['SDL_VIDEO_CENTERED'] = '1'
 
 pygame.init()
 
+pygame.mixer.music.load('./asset/music.mp3')
+
+pygame.mixer.music.set_volume(0.5)
+
+pygame.mixer.music.play(-1)
+
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
@@ -159,6 +165,8 @@ class PlayScreen:
                         self.stone_list[f'{row_index}:{col_index}'] = int(self.stone_weights[stone_idx])
                         stone_idx += 1
                     elif item == '+':
+                        self.i = row_index
+                        self.j = col_index
                         new_tile = ['.', '@']
                 self.game_map[row_index][col_index] = new_tile
 
