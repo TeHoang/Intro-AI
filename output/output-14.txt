@@ -1,12 +1,12 @@
 BFS
-Steps: 86, Weight: 980, Node: 25498, Time (ms): 1790.06, Memory (MB): 2.49
-drrdRulllDRddlUUrurrdLulDlddrUUrurrrdLLulullDRddlUruRRdLulDlddrUUruullDRddlUrrUdrrruLL
+Steps: 34, Weight: 260, Node: 86445, Time (ms): 13866.47, Memory (MB): 9.09
+uRRRRllddrrdLLrrrddlllluUUluRdddlU
 DFS
-Steps: 730, Weight: 4700, Node: 17596, Time (ms): 1328.40, Memory (MB): 1.89
-rrdllDurrdRlulldRddlUUrurrdLrurrdLrullllDrRlllddrUluRurrdLrullDrrurrdLrulllldlddrUUrRlurrrdLrulllullDRlDrrRllddlUrurrurrdLrullLrrrdlLrrulllulldRRRlllDrddlUruurrdrruLrdllLrrrulLLulldRRRlllDRlurrrdrruLrdllLrrrulLLulldRRRllldRddlUruurrdLrulllDurrrdrruLrdlllulldRddlUruurRllddlUrurrdrruLrdllLrrrulLLullDRRRldrrruLLLulldDRRRllluRldrrrurrdLrullLrrrdlLrrulllulldRRlldrddlUruurulldDrurRdrruLLLrrrdllLrrrulllullddRRRllluurrdrrrdLrulllulldRldrrRuLrdllddlUrurrurrdLrullldRlldlUrrrurrdLrullldRluullDRlDrrruLrdllluRldrddlUrurruLrrrdLrullldRluulldRdrrurrdLLrrullLrrrdllLrrrulllulldDuRldRRlddlUrurRlldlUrrrurrdLrullLrrrdlLrrulllullDRRlddlUrurRdLrrruLrdllluRllDrrrruLrdlllllddrUUruRldrrruLrdllluullDRlDrrURllldrrrrruLrdllllddlUrurrrrulLrrdlllldlU
+Steps: 649, Weight: 2220, Node: 16508, Time (ms): 2276.00, Memory (MB): 1.71
+rrdrrrdlLrrddllllluruRRlldldrrrrruuulllllDrrrurrdLrddlllllUrdrrrruulullllDrrRlllurrrrrdddlllllUrdrrrruuullllluuRRRRlllldrrdrrrdLrddlllllururRlldldrrrrruuulllllDrrrurrdLrddlllllUrdrrrruulLrrddllllluruRRlldldrrrrruuLrddllllluruurulldDrrRlllurrrrrdddlllllUUrrrurrdLrddlllllururRlllUrrrrrdLrddlllllururulurullDrrdrrrdlLrrddlllllurulUrrrrrdllLrrrddlllllurUrrrrddllllluuuRRRllldrrrrruLrdlllllururullDrrdRlldrrrrddllllluuUrrululDrrdrdrruLrdlllllUrrdrrrulLrrdlllUrrrdllllluruurDlulDrrDlurulldDrrrrrdllLrrrddlllllurUrrrrddllllluUrrrrrulllullDRRRlllDrrrrrddlllllUrdrrrruuuLrdlllldlUrrrrrulLrrdlllllUrdrrrrullLulDrululDrrdrrrdddlllllurUrrrrddllllluuUdrUruullDR
 UCS
-Steps: 86, Weight: 980, Node: 33714, Time (ms): 2799.93, Memory (MB): 2.72
-drrdRlullDRddlUUrurrdLulDlddrUUrrurrdLLulullDRddlUruRRdLulDlddrUUruullDRddlUrrUdrrruLL
+Steps: 34, Weight: 260, Node: 95151, Time (ms): 14021.94, Memory (MB): 8.24
+uRRRRllddrrdLLrrrddlllluUUluRdddlU
 A*
-Steps: 90, Weight: 980, Node: 24798, Time (ms): 2834.18, Memory (MB): 2.18
-drrdRlullDRddlUUrurrdLulDlddrUUrurrrdLLulullDRddlUruRRdrruLdlLulDlddrUUruullDRddlUrrUdrruL
+Steps: 39, Weight: 340, Node: 67713, Time (ms): 10654.85, Memory (MB): 7.57
+uRRdddldlUrurrrdLLulDlddrUUUruulldRurRR
